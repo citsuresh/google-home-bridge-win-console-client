@@ -13,12 +13,12 @@ using Zeroconf;
 
 namespace GhBridgeClientFx
 {
-class Program
-{
-    // Used to signal when a new endpoint is announced (for mDNS wait logic)
-    private static TaskCompletionSource<Endpoint> _nextAnnouncementTcs;
-    // Used to signal when a missing IP announcement is detected
-    private static volatile bool shouldReconnect = false;
+    class Program
+    {
+        // Used to signal when a new endpoint is announced (for mDNS wait logic)
+        private static TaskCompletionSource<Endpoint> _nextAnnouncementTcs;
+        // Used to signal when a missing IP announcement is detected
+        private static volatile bool shouldReconnect = false;
         // -------------------- Models --------------------
         class Options
         {
@@ -472,7 +472,8 @@ Usage:
                                 await Task.Delay(2000);
                                 continue;
                             }
-                            log.Info("<-- resp " + respText);
+                            // Comment out the device list JSON response logging
+                            // log.Info("<-- resp " + respText);
 
                             // Parse device list
                             JObject root = null;
@@ -751,9 +752,9 @@ Usage:
                     }
                     log.Info($"[Loop {loopCount}] End of main loop iteration");
                 }
-            log.Info("[EXIT] Application is about to return from RunAsync. This should not happen unless user selected Exit.");
-            // (Unreachable, but required for Task<int> signature)
-            return 0;
+                log.Info("[EXIT] Application is about to return from RunAsync. This should not happen unless user selected Exit.");
+                // (Unreachable, but required for Task<int> signature)
+                return 0;
             }
         }
     }
