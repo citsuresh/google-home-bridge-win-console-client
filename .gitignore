@@ -1,0 +1,59 @@
+# Ignore build output directories
+bin/
+obj/
+
+# Ignore user-specific and IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.sln.iml
+
+# Ignore NuGet packages and lock files
+packages/
+*.nupkg
+packages.lock.json
+project.lock.json
+
+# Ignore test results
+TestResults/
+
+# Ignore logs, temp, and backup files
+*.log
+*.tlog
+*.cache
+*.pdb
+*.dbmdl
+*.bak
+*.backup
+*.tmp
+*.vspscc
+*.vssscc
+
+# Ignore Windows image file caches
+Thumbs.db
+Desktop.ini
+
+# Ignore Resharper, DotCover, NCrunch, TeamCity, DotTrace
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.dotCover
+*.ncrunch*
+.*crunch*.local.xml
+_TeamCity*
+*.dotTrace
+
+# Ignore MonoDevelop/Xamarin Studio user prefs
+*.userprefs
+
+# Ignore Windows Installer files
+*.msi
+*.msm
+*.msp
+
+# Ignore web publish and local history
+publish/
+.localhistory/
