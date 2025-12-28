@@ -1,0 +1,14 @@
+{
+  "IntervalSec": 10,
+  "Cmd": "list",
+  "DeviceId": "bulb1",
+  "Host": null,
+  "Port": 8602,
+  "Token": null,
+  "MdnsOff": false,
+  "Tls": false,
+  "CmdSchedule": "list;status:bulb1;ping",
+  "LogFile": "logs/client.log",
+  "ConfigPath": "GhBridgeClientFx.json",
+  "DevIgnoreCertErrors": false
+}
