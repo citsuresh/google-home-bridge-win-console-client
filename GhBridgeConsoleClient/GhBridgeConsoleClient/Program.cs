@@ -679,39 +679,41 @@ Usage:
                                     }
                                     log.Info("<-- resp " + toggleRespText);
                                     Console.WriteLine("\nToggle command sent. Response: ");
-                                    // Parse response to check for success or error
-                                    bool isSuccess = false;
-                                    bool isHomeException = false;
-                                    string errorMsg = null;
+                                    // Parse response to check for success or error and update local state
                                     try
                                     {
-                                        var respObj = JObject.Parse(toggleRespText);
-                                        isSuccess = (bool?)respObj["ok"] == true;
-                                        var errorObj = respObj["error"];
-                                        if (errorObj != null && errorObj.Type == JTokenType.Object)
+                                        var resp = JsonConvert.DeserializeObject<BridgeResponse<JObject>>(toggleRespText);
+                                        if (resp != null && resp.Ok)
                                         {
-                                            var code = (string)errorObj["code"];
-                                            if (!string.IsNullOrEmpty(code) && code.IndexOf("Exception", StringComparison.OrdinalIgnoreCase) >= 0)
-                                                isHomeException = true;
-                                            errorMsg = (string)errorObj["message"];
+                                            // If server returned updated device state, apply it to our local list
+                                            try
+                                            {
+                                                var respDevices = resp.Data != null ? resp.Data.SelectToken("devices") as JArray : null;
+                                                if (respDevices != null && respDevices.Count > 0)
+                                                {
+                                                    devices[sel - 1] = respDevices[0];
+                                                }
+                                            }
+                                            catch { /* ignore update errors */ }
+
+                                            var prevColor = Console.ForegroundColor;
+                                            Console.ForegroundColor = ConsoleColor.Green;
+                                            Console.WriteLine("Success");
+                                            Console.ForegroundColor = prevColor;
+                                        }
+                                        else
+                                        {
+                                            var code = resp?.Error?.Code ?? "";
+                                            var msg = resp?.Error?.Message ?? toggleRespText;
+                                            PrintError($"Toggle failed: {code}: {msg}");
                                         }
                                     }
-                                    catch { }
+                                    catch (JsonException jex)
+                                    {
+                                        log.Err("Toggle response parse error: " + jex.Message);
+                                        PrintError("Invalid response from server.");
+                                    }
 
-                                    if (isSuccess)
-                                    {
-                                        var prevColor = Console.ForegroundColor;
-                                        Console.ForegroundColor = ConsoleColor.Green;
-                                        Console.WriteLine(toggleRespText);
-                                        Console.ForegroundColor = prevColor;
-                                    }
-                                    else
-                                    {
-                                        var prevColor = Console.ForegroundColor;
-                                        Console.ForegroundColor = ConsoleColor.Red;
-                                        Console.WriteLine(toggleRespText);
-                                        Console.ForegroundColor = prevColor;
-                                    }
                                     // Wait 5 seconds before continuing
                                     await Task.Delay(5000);
                                     continue;
