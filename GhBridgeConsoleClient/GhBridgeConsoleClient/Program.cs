@@ -36,6 +36,21 @@ namespace GhBridgeClientFx
             public bool DevIgnoreCertErrors { get; set; } = false; // DEV ONLY
         }
 
+        // Print a user-visible error message in red, restoring previous color
+        static void PrintError(string msg)
+        {
+            var prev = Console.ForegroundColor;
+            try
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(msg);
+            }
+            finally
+            {
+                Console.ForegroundColor = prev;
+            }
+        }
+
         class BridgeRequest
         {
             [JsonProperty("id")] public string Id { get; set; }
@@ -89,7 +104,16 @@ namespace GhBridgeClientFx
             public void Err(string msg)
             {
                 var line = string.Format("{0:yyyy-MM-dd HH:mm:ss.fff} ERR {1}", DateTime.Now, msg);
-                Console.WriteLine(line);
+                var prevColor = Console.ForegroundColor;
+                try
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(line);
+                }
+                finally
+                {
+                    Console.ForegroundColor = prevColor;
+                }
                 WriteFile(line);
             }
 
@@ -293,7 +317,7 @@ Usage:
 
             if (configParseError)
             {
-                Console.WriteLine("WARNING: Failed to parse config file. Using defaults and command-line options.");
+                PrintError("WARNING: Failed to parse config file. Using defaults and command-line options.");
             }
             return opt;
         }
@@ -505,9 +529,9 @@ Usage:
                             Console.WriteLine("\nDevices:");
                             if (devices.Count == 0)
                             {
-                                Console.WriteLine("  No devices found.");
+                                PrintError("  No devices found.");
                                 // Wait a moment before next loop
-                                await Task.Delay(opt.IntervalSec * 1000);
+                                await Task.Delay(5000);
                                 continue;
                             }
                             else
@@ -590,8 +614,8 @@ Usage:
                                 {
                                     if (devices.Count == 0)
                                     {
-                                        Console.WriteLine("No devices to toggle.");
-                                        await Task.Delay(opt.IntervalSec * 1000);
+                                        PrintError("No devices to toggle.");
+                                        await Task.Delay(5000);
                                         continue;
                                     }
                                     int sel = -1;
@@ -600,23 +624,36 @@ Usage:
                                         Console.Write($"Select device [1-{devices.Count}]: ");
                                         var input = Console.ReadLine();
                                         if (int.TryParse(input, out sel) && sel >= 1 && sel <= devices.Count) break;
-                                        Console.WriteLine("Invalid selection. Try again.");
+                                        PrintError("Invalid selection. Try again.");
                                     }
                                     var selected = devices[sel - 1];
                                     var selectedId = (string)selected["id"];
-                                    // Determine current state and toggle
+                                    // Determine current state and online status
                                     var stateToken = selected["state"];
                                     bool? currentOn = null;
+                                    bool? isOnline = null;
                                     if (stateToken != null && stateToken.Type == JTokenType.Object)
                                     {
+                                        var onlineProp = stateToken["online"];
                                         var onProp = stateToken["on"];
+                                        if (onlineProp != null && onlineProp.Type == JTokenType.Boolean)
+                                            isOnline = (bool)onlineProp;
                                         if (onProp != null && onProp.Type == JTokenType.Boolean)
                                             currentOn = (bool)onProp;
                                     }
+
+                                    // If device is known to be offline, show error and don't send commands
+                                    if (isOnline.HasValue && !isOnline.Value)
+                                    {
+                                        PrintError("Selected device is OFFLINE. Cannot send command.");
+                                        await Task.Delay(5000);
+                                        continue;
+                                    }
+
                                     if (currentOn == null)
                                     {
-                                        Console.WriteLine("Unable to determine current state for toggle.");
-                                        await Task.Delay(opt.IntervalSec * 1000);
+                                        PrintError("Unable to determine current state for toggle.");
+                                        await Task.Delay(5000);
                                         continue;
                                     }
                                     bool newState = !currentOn.Value;
@@ -692,8 +729,8 @@ Usage:
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Invalid option. Try again.");
-                                    await Task.Delay(opt.IntervalSec * 1000);
+                                    PrintError("Invalid option. Try again.");
+                                    await Task.Delay(5000);
                                     continue;
                                 }
 
